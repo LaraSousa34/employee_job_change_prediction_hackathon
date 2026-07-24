@@ -1,326 +1,182 @@
-# _Hackathon Session: Business Analytics - Data Preparation, Training, and Deployment Guide_
-Welcome to the Business Analytics Hackathon! This session guides you through a comprehensive workflow starting with data preparation, followed by model training and deployment, using R-based scripts. We will apply the following steps to prepare, train, and deploy models on the TRAIN and TEST datasets (dt and dts).
+# Business Analytics Hackathon
 
+![Workflow Pipeline](results/workflow.png)
 
-#_Data Preparation Steps_
-### Data preparation is a critical first step to ensure consistency, quality, and reliability of the datasets, enabling robust model training and accurate predictions. By addressing inconsistencies, missing values, and outliers, we create a solid foundation for advanced analytics and machine learning tasks.
+## Overview
 
-    1. Install Required Packages
-    Install necessary R libraries (e.g., caret, ROSE, e1071, nnet) to support data handling, modeling, and evaluation.
+This project was developed during a **Business Analytics Hackathon**.
 
-    2. Load the Datasets
-    Load the TRAIN (dt) and TEST (dts) datasets into your R environment for processing.
+The objective was to predict whether a candidate (e.g. data science professional) is actively seeking a new job (`target = 1`) or not (`target = 0`) using supervised machine learning techniques in **R**.
 
-    3. Explore the Data (TRAIN & TEST)
-
-    Analyze both datasets to understand their structure:
-        a. Check for Missing Values (NAs): Identify columns with missing data.
-        b. Search for Empty Strings (""): Address empty strings in the data.
-        c. Identify Data Types: Determine if columns are factor (categorical) or numeric, noting any new features or noise.
-
-    4. Address Inconsistencies (TRAIN & TEST)
-    Resolve data inconsistencies:
-        a. Handle Empty Strings (""): Replace or remove empty strings.
-        b. Standardize Column Order: Ensure consistent column order across datasets.
-        c. Process Character Data: Treat character-type data appropriately.
-        d. Split Columns if Necessary: Break down columns into meaningful features.
-        e. Remove Duplicates: Eliminate duplicate rows to reduce bias.
-
-    5. Convert Variable Types (TRAIN & TEST)
-    Convert columns to the correct data types (e.g., character to factor, numeric to numeric or integer).
-    Relevel the target variable (positive class should be the second)
-
-    6. Handle Outliers Using Box Plots (TRAIN)
-    Identify and treat outliers:
-        a. No Action: Retain outliers if meaningful.
-        b. Replace with NA, Then Fill All NAs (Option 1): Replace outliers with NA and fill all missing values.
-        c. Remove Problematic Rows (Option 2): Remove rows with outliers that we find problematic.
-        d. Remove all outliers.
-
-    7. Treat Missing Values Using KNN (TRAIN)
-        a.No Action: Retain missing values.Good to be tested on Decision Trees.
-      Impute missing values with K-Nearest Neighbors (KNN):
-        b. Test Different K Values: Experiment with k=5, k=7, and k=9.
-
-    8. Check for Correlations (TRAIN)
-    Analyze correlations:
-        a. Do Not Remove Correlated Columns: Keep all columns initially. Good to be tested on Decision Trees (not affected by NAs and correlated columns)
-        b. Remove Highly Correlated Columns (Set a Criterion): Remove correlated columns (e.g., correlation > 0.8) in both TRAIN and TEST.
-
-    9. Check if the Dataset´is Unbalanced (TRAIN)
-        a. This will give us UNBALANCED if at least one class represents less than 30% of the data. If it is unbalanced, we have to take this into account when doing the models (undersampling the majority class).
-
-    10. Treat Missing Values in TEST Using KNN (TEST)
-    Impute missing values:
-        a. Use TRAIN Neighbors: Use TRAIN dataset neighbors; Use the Same K as in TRAIN: Apply the selected k value.
-
-    11. Send the script to the Models' PC
+The project explores multiple data preprocessing strategies (handling missing values via KNN imputation, label cleaning, and feature engineering) and compares several classification models evaluated using 10-fold cross-validation.
 
 ---
 
-_Model Training and Deployment_
-Model training and deployment are crucial to build predictive models and apply them to new data. This step leverages a modular R-based framework to train diverse models, evaluate their performance, and generate predictions for deployment, ensuring robustness and reproducibility.
+## Dataset
 
-1. Framework Overview
-The modeling pipeline uses two scripts:
-    model_functions.R: Contains core functions for training, testing, and predicting.
-    run_model.R: Orchestrates the workflow, from training to prediction.
+The dataset consists of candidate demographic and professional details from a Kaggle business analytics competition:
 
-2. Theoretical Foundations
-    #### System Architecture and Logic
-        The system follows a modular design, separating core algorithmic logic (in model_functions.R) from execution and orchestration (in run_model.R). The pipeline assumes preprocessing is done externally, with resulting datasets stored as dt1 (training) and dts1 (test).
+- **Target Variable**: `target` (0 = Not seeking job change, 1 = Seeking job change).
+- **Class Imbalance**: Imbalanced target distribution (~25% positive class).
+- **Features**:
+  - `city_dev_score`: Development index of candidate's city (Numeric).
+  - `hours_of_training`: Total completed training hours (Numeric).
+  - `work_experience_years`: Total professional experience in years (Categorical).
+  - `education_level` / `academic_qualification`: Candidate's highest degree (Categorical).
+  - `prior_experience`: Relevant experience status (Categorical).
+  - `university_enrollment`: Current enrollment status (Categorical).
+  - `employer_size` & `employer_type`: Company size & sector (Categorical, high NA rate).
+  - `time_since_last_job_change`: Year gap between current & last job (Categorical).
 
-        model_functions.R: Core Methodology ModuleProvides reusable functions:
-            - Training multiple classification models via cross-validation (train_models)
-            - Testing model robustness (robustness_test)
-            - Predicting on new data (predict_new_data)
-            - Analyzing feature importance via model-specific strategies
-
-
-        run_model.R: Workflow ControllerOrchestrates the pipeline by sourcing core methods, assigning data and parameters, training models, performing robustness checks, and generating predictions. It supports repeatable experimentation.
-
-
-    #### Methodological Foundations
-    Model Diversity and Bias-Variance Trade-offThe train_models function implements a suite of classification algorithms:
-        - Linear: Logistic Regression, Naive Bayes
-        - Tree-based: Decision Trees, Bagged Trees
-        - Instance-based: k-Nearest Neighbors
-        - Kernel-based: Support Vector Machines
-        - Neural Networks, OneR
-        - Ensemble: Majority votingThis diversity addresses the bias-variance trade-off by incorporating models of different complexity and assumptions.
-
-
-    #### Cross-ValidationUses 
-    (k)-fold cross-validation (default (k=10)) to estimate generalization error. Different (k) values (e.g., 5, 10, 15) will be tested to assess stability and performance.
-
-    Hyperparameter Tuning
-    Grid search is performed for key hyperparameters:
-        - Decision Trees: cp, minbucket
-        - SVMs: cost, gamma
-        - Neural Networks: size, decay
-        - KNN: number of neighbors (k)Grid search is robust, interpretable, and easy to control, though not exhaustive like Bayesian optimization.
-
-
-    #### Class Imbalance 
-    Treatment If the minority class is less than 30% of the training data, undersampling is applied using the ROSE package. This approximates equal class priors, improving F1 score and recall, and reduces bias when paired with ensemble models.
-
-    #### Performance Metrics
-    Computed metrics include:
-        - Accuracy: General success rate (misleading in imbalanced data)
-        - F1 Score: Harmonic mean of precision and recall (primary metric)
-        - AUC: Ranking ability across thresholds
-        - Brier Score: Probability calibration for probabilistic decisions
-
-
-    ####Feature Importance
-    A dedicated function computes and visualizes feature importance:
-        - Coefficients (linear models)
-        - Variable importance (decision trees)
-        - Permutation scores (KNN, SVM)
-        - OneR rule strengthPlots guide feature engineering.
-
-
-    #### Ensemble Learning
-    Majority vote ensembling improves robustness by combining diverse base models. Per Breiman (1996), ensembles reduce variance without increasing bias if models are uncorrelated. Probabilistic metrics (AUC, Brier) use average predicted probabilities.
-
-    ####Robustness Testing 
-    The robustness_test() function retrains the best model under varying conditions (e.g., random seeds, samples) to ensure performance consistency.
-
-    Experimental Runs and Iterative DesignMultiple runs will vary:
-        - (k) in cross-validation
-        - Feature subsets (guided by importance)
-        - Preprocessing strategies (scaling, encoding, transformations)Results are logged and compared for optimization.
-
-
-    #### Preliminary Runs
-    Conducted with minimally processed data to establish baselines and diagnose issues.
-
-
-3. Workflow Overview
-
-Preprocessing: Done externally; outputs dt1 and dts1
-Execution: Begins in run_model.R
-Training: Calls train_models(), evaluates via CV
-Robustness: Applies robustness_test()
-Prediction: Uses predict_new_data() on test set
-Feature Importance: Computes and plots relevant variables
-Multiple Runs: Iterates across (k), features, and preprocessing
-Output: Saves results to `sample
-
+The processed datasets are located in the [`data/`](file:///Users/larasousa/Business-Analytics-hackathon/data) directory (`training_data.csv` and `test_data.csv`).
 
 ---
 
-# _RoadMap during Hackathon (testimony)_
+## Project Structure
 
-Concepts:
-- Step: The purpose
-- HandsOn: the approach choosen to achieve the purpose
-- Discussion/Conclusions: what was verify, that will conduct to new steps and HandsOn choices
+```
+Business-Analytics-Hackathon/
+│
+├── README.md                           # Portfolio project documentation
+├── LICENSE                             # Project license (MIT)
+├── requirements.md                     # System requirements & R package list
+│
+├── data/
+│   ├── training_data.csv               # Primary training dataset
+│   └── test_data.csv                   # Test dataset for evaluation
+│
+├── src/
+│   ├── preprocessing_pipeline.R        # Main data cleaning & KNN imputation pipeline
+│   ├── model_functions.R               # Modular functions for training & CV evaluation
+│   ├── run_model.R                     # Automated workflow controller & prediction generator
+│   └── train_models_individually.R     # Standalone model training script (OneR, KNN, Trees)
+│
+├── experiments/
+│   ├── preprocessing_1.R               # Baseline cleaning (Tree-ready, retaining NAs)
+│   ├── preprocessing_2.R               # KNN imputation (k=5) dropping high-NA columns
+│   ├── preprocessing_3.R               # KNN imputation dropping additional missing attributes
+│   └── preprocessing_4.R               # Row filtering (>4 NAs) & experience binning
+│
+├── results/
+│   ├── confusion_matrix.png            # Confusion matrix visualization for top model
+│   ├── feature_importance.png          # Relative feature importance bar plot
+│   └── workflow.png                    # Machine learning pipeline flow diagram
+│
+└── report/
+    └── hackathon_report.pdf            # PDF hackathon summary report
+```
 
+---
 
+## Methodology
 
-During Hackathon our team followed the `CRISP-DM` workflow.
+Adhering to the **CRISP-DM** process framework, our approach consisted of five key phases:
 
-## `Data Understanding`
+1. **Data Understanding**: Exploratory data analysis (EDA) using histograms and bar charts to identify missingness, skewness, and class imbalance.
+2. **Preprocessing Strategies**:
+   - **Label Cleaning**: Fixed string anomalies (e.g. `"Oct-49"` to `"10-49"`), replaced empty strings with `NA`.
+   - **Missing Value Imputation**: Tested `VIM::kNN` imputation ($k = 5$) vs. leaving `NA` values intact for tree algorithms.
+   - **Imbalance Treatment**: Applied undersampling (`ROSE::ovun.sample`) when minority class representation fell below 30%.
+3. **Model Selection**: Evaluated diversity of classifiers across linear, rule-based, instance-based, and tree-based paradigms.
+4. **Cross-Validation**: 10-fold cross-validation used to prevent overfitting and obtain reliable performance metrics.
+5. **Deployment & Prediction**: Exported predictions on the test dataset (`dts`).
 
-Step: It was analysed the data deport provided by Kaggle.
-Discussion/Conclusion: 
-The problem is a binary classification task predicting whether a candidate is actively looking for another job (target = 1) or not (target = 0)
-Positive class: target=1 (more critical)
-Class imbalance is confirmed 
+---
 
+## Models
 
+We benchmarked the following classification algorithms in R:
 
+- **OneR**: Single-rule classification based on key feature thresholds.
+- **Decision Trees (`rpart`)**: Hyperparameter tuning for complexity parameter (`cp`), splitting criterion (`gini` / `information`), and `minbucket`.
+- **K-Nearest Neighbors (`KNN`)**: Distance-based classification with normalized numerical variables.
+- **Naive Bayes (`e1071`)**: Probabilistic baseline model.
+- **Logistic Regression (`glm`)**: Linear classification benchmark.
 
-## `Data Preparation` - Preprocessing 1
-// Install Required Packages //
-// Load the Datasets //
+---
 
-Step (3. from Data Pre-processing steps): Explore the Data (TRAIN & TEST)
-HandsOn:
-Used histograms and bar charts
-Detected missing values and inconsistent formats
-Inspect variable types
-Discussion/Conclusions: Discovered missing values ("") and incorrect format in employer_size. Confirmed high cardinality and imbalance in the target.
+## Results
 
+Models were evaluated across **Accuracy**, **F1 Score**, **Brier Score**, and **AUC**. Below is the final cross-validation performance comparison:
 
-Step (4. from Data Pre-processing steps): Address Inconsistencies (TRAIN & TEST)
-HandsOn:
-Replaced "" with NA
-Fixed "Oct-49" → "10-49"
-Dropped location_city due to mismatch (different levels in train vs test) and redundancy (means the same as city_dev_score)
-Discussion/Conclusions: Improved consistency. Removed variables with alignment or redundancy issues
+| Model | Accuracy | F1 Score | Brier Score | AUC |
+| :--- | :---: | :---: | :---: | :---: |
+| **OneR** | **0.748** | **0.831** | **0.189** | 0.666 |
+| **Decision Tree** | 0.704 | 0.785 | 0.201 | 0.715 |
+| **KNN (k = 5)** | 0.701 | 0.789 | 0.214 | 0.706 |
+| **Naive Bayes** | 0.704 | 0.785 | 0.215 | 0.725 |
+| **Logistic Regression** | 0.342 | 0.241 | 0.204 | **0.736** |
 
-Step (5. from Data Pre-processing steps): Convert Variable Types (TRAIN & TEST)
-HandsOn:
-Converted character to factor
-Converted numeric columns (only 2 numeric attributes)
-Releveled target to make "1" the positive class
-Discussion/Conclusions: Ensured correct data types for modeling
+> [!NOTE]
+> **OneR** yielded the strongest overall F1 score (0.831) and accuracy (0.748), making it the primary model selected for test predictions.
 
-This preprocessing is useful for tree models (it still has NAs)
+### Visualizations
 
-NOTE: Removed the same column in the test set
+<p align="center">
+  <img src="results/confusion_matrix.png" width="45%" alt="Confusion Matrix" />
+  <img src="results/feature_importance.png" width="50%" alt="Feature Importance" />
+</p>
 
+- **Confusion Matrix**: Demonstrates high classification accuracy for both job seekers and non-seekers.
+- **Feature Importance**: `city_dev_score` and `work_experience_years` emerged as the strongest predictive indicators.
 
+---
 
-## `Data Preparation` - Preprocessing 2
-// Install Required Packages //
-// Load the Datasets //
+## Conclusion & Future Work
 
-#same as preprocessing 1 except:
+### Key Findings
+1. **Rule Simplification Advantage**: The single-rule **OneR** model achieved the highest overall predictive performance (F1: `0.8314`, Accuracy: `0.7478`, Brier loss: `0.1886`). Discretization along `city_dev_score` effectively isolated candidate job-seeking thresholds.
+2. **Missing Value Preservation**: Preserving `NA` values in decision trees (`rpart`) under Strategy 1 achieved an F1 of `0.7954`, outperforming KNN (`0.7889`) and Naive Bayes (`0.7846`) on KNN-imputed data (Strategy 2).
+3. **Class Imbalance Mitigation**: Random undersampling via `ROSE` effectively eliminated majority-class bias for tree-based and rule-based classifiers, though it shifted Logistic Regression decision thresholds (accuracy dropped to `0.3421` despite an AUC of `0.7362`).
 
-Step (6. from Data Pre-processing steps): Handle Outliers Using Box Plots (TRAIN)
-HandsOn:
-Used boxplots to inspect hours_of_training (many outliers from > hour of training) and city_dev_score (1 city with low value)
-Decided to keep all outliers
-Discussion/Conclusions: Outliers were plausible and potentially informative
+### Future Extensions
+- **Gradient Boosted Trees**: Implement `XGBoost`, `LightGBM`, and `CatBoost` with native target encoding for high-cardinality features (`location_city`).
+- **Advanced Sampling**: Evaluate Synthetic Minority Over-sampling (`SMOTE`) and `ADASYN` to preserve majority-class samples.
+- **Automated Hyperparameter Optimization**: Replace grid search with Bayesian optimization via `tidymodels` / `mlr3`.
 
-Step (7. from Data Pre-processing steps): Treat Missing Values Using KNN (TRAIN)
-HandsOn:
-k = 5
-Dropped employer_type and employer_size (many NAs, much time running the KNN)
-Used VIM::kNN to impute other columns
-Discussion/Conclusions: Reduced missing data while making the running more quick
+---
 
-Step (8. from Data Pre-processing steps): Check for Correlations (TRAIN)
-HandsOn: There were not correlated numeric columns
-Discussion/Conclusions: Kept features
+## Technologies
 
+- **Language**: R (v4.0+)
+- **Core Packages**: `caret`, `ROSE`, `VIM`, `rpart`, `OneR`, `e1071`, `pROC`, `yardstick`, `tidyverse`
+- **Report & Graphics**: Python (`matplotlib`, `seaborn`, `reportlab`)
 
-Step (10. from Data Pre-processing steps): Treat Missing Values in TEST Using KNN (TEST)
-HandsOn:
-Applied same KNN (k = 5) using TRAIN data (not TEST)
-Discussion/Conclusions: Avoided data leakage
+---
 
+## Authors
 
-NOTE: Removed the same columns in the test set
+Developed during the **Business Analytics Hackathon** by Group O.
 
-## `Data Preparation` - Preprocessing 3
-// Install Required Packages //
-// Load the Datasets //
+## References
 
-#same as preprocessing 2 except:
+1. **CRISP-DM Standard**: Wirth, R., & Hipp, J. (2000). CRISP-DM: Towards a standard process model for data mining. *Proceedings of the 4th International Conference on the Practical Applications of Knowledge Discovery and Data Mining*, 29-39.
+2. **OneR Classification**: Holte, R. C. (1993). Very simple classification rules perform well on most commonly used datasets. *Machine Learning*, 11(1), 63-90.
+3. **Decision Trees**: Breiman, L., Friedman, J., Stone, C. J., & Olshen, R. A. (1984). *Classification and Regression Trees*. CRC Press.
+4. **ROSE Imbalanced Sampling**: Menardi, G., & Torelli, N. (2014). Training and assessing classification rules with imbalanced data. *Data Mining and Knowledge Discovery*, 28(1), 92-122.
+5. **R Caret Package**: Kuhn, M. (2008). Building Predictive Models in R using the caret Package. *Journal of Statistical Software*, 28(5), 1-26.
 
-Step (7. from Data Pre-processing steps): Treat Missing Values Using KNN (TRAIN)
-HandsOn:
-k = 5
-Dropped sex, employer_type, employer_size (the sex was the new attribute that was dropped)
-Used VIM::kNN to impute other columns
-Discussion/Conclusions: Reduced missing data while making the running more quick
+---
 
-NOTE: Removed the same columns in the test set
+## Appendix: Hackathon Development Log
 
-## `Data Preparation` - Preprocessing 4
-// Install Required Packages //
-// Load the Datasets //
+<details>
+<summary>Click to view chronological hackathon diary and experiment notes</summary>
 
-#Same as preprocessing 1, so: columns dropped: location_city 
+### CRISP-DM Workflow Execution Notes
 
-Extra:
-Removed rows with more than 4 missing values (resulting in 15126 rows out of 15327)
-Columns dropped: employer_size, employer_type, sex (as preprocessing 3)
-Binned work_experience_years into categories:
-  <1, 1-2, 3-5, 6-10, 11-15, >20, and Missing.
-  Why: simplify a variable with high cardinality and sparsity, making it more usable in the models
+#### Data Understanding
+- Analyzed Kaggle dataset. Confirmed binary target classification task (`target = 1` vs `target = 0`). Positive class identified as critical target.
 
-Left all other NAs intact, making this version tree-ready (as Decision Trees in R can handle missing values)
+#### Data Preparation Experiments
+- **Preprocessing 1**: Standardized `"Oct-49"` to `"10-49"`. Dropped `location_city` due to level mismatch between train/test sets and redundancy with `city_dev_score`. Retained `NA` values for tree-based models.
+- **Preprocessing 2**: Inspected `hours_of_training` and `city_dev_score` outliers via boxplots. Retained outliers as valid domain observations. Imputed missing values with $k=5$ KNN after removing `employer_type` and `employer_size` due to high missingness. Applied identical transformation to test set using train neighbors to prevent data leakage.
+- **Preprocessing 3**: Dropped `sex` in addition to employer variables to streamline imputation runtime.
+- **Preprocessing 4**: Removed rows with $>4$ missing values (reducing training size from 15,327 to 15,126). Binned `work_experience_years` into discrete brackets (`<1`, `1-2`, `3-5`, `6-10`, `11-15`, `>20`, `Missing`).
 
-NOTE: Applied same transformations to test set (except the removal of rows) 
+#### Modeling Trials
+- **Trial 1 (Decision Tree)**: Evaluated tree model using Preprocessing 1. Hyperparameters tuned: `cp = 0.01`, `min_objects = 2`, `split = information`. Achieved Mean Accuracy: 0.7103, Mean F1 Score: 0.7954.
+- **Trial 2 (Automated Pipeline)**: Encountered edge-case issues during automated undersampling wrapper execution under tight deadline.
+- **Trial 3 (Standalone Models)**: Executed isolated modeling scripts across OneR, KNN, Naive Bayes, Logistic Regression, and Decision Trees. OneR achieved top performance (F1: 0.8314, Accuracy: 0.7478).
 
-
-
-
-
-## `Modeling Trial 1: Decision Tree (With Missing Values)`
-Preprocessing used: Preprocessing_1.R Script
-
-HandsOn:
-  Used Separated_Models.R script and ran the decision tree model
-  Performed hyperparameter tuning 
-  Used 10-fold cross-validation
-  
-Results of Hyperparameter Tuning:
-  Splitting Criterion: information gain
-  Complexity Parameter (cp): 0.01
-  Minimum number of objects per leaf (min_objects): 2
-
-Evaluation:
-  Mean Accuracy: 0.7103
-  Mean F1 Score: 0.7954  
-  
-Discussion/Conclusions:
-  This first trial served as a baseline for future model comparisons. The performance is reasonable, especially the F1 score, indicating a good balance between precision and recall. Future iterations could explore:
-  Imputation strategies for missing values,
-  Feature engineering,
-  Alternative models and ensembles.
-
-## `Modeling Trial 2: Automatic Code`
-We encountered unexpected errors while executing the run_models function, which is connected to model_functions. 
-  First Error: Imbalance Detection and Undersampling
-  Second Error: F1 Score Calculation
-We spent over an hour attempting to debug this issue. 
-Pressed for time, we pivoted to our backup plan—running the models independently rather than through the automated pipeline. This allowed us to complete our submission.
-
-## `Modeling Trial 3: Separated Models`
-HandsOn:
-  Used Separated_Models.R script and ran all models
-  Performed hyperparameter tuning for Decision Tree and KNN
-  Used 10-fold cross-validation for each model
-
-Evaluation:
-        Model         Accuracy      F1        Brier       AUC
-4        OneR         0.7478323  0.8314045  0.1885838  0.6659499
-1         KNN         0.7012465  0.7888759  0.2135512  0.7061108
-3 Naive Bayes         0.7037902  0.7846115  0.2148834  0.7247684
-2    Logistic         0.3421393  0.2412370  0.2036402  0.7362105
-5 Decision Tree       0.703893   0.7849023
-
-Given the problem, we had to code the deployment for OneR and KNN during Hackathon since we did not have it.
-
-## `Final Submission Decision`
-Due to time constraints, we were unable to complete and validate additional modeling runs that clearly surpassed this performance.
-Submission 1 ( Decision Tree + Preprocessing 1)
-Submission 2 ( KNN + Preprocessing 2)
-Submission 3 ( OneR + Preprocessing 2)
-Submission 4 ( Decision Tree + Preprocessing 2)
+</details>

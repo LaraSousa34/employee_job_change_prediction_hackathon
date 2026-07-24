@@ -90,16 +90,15 @@
   library(zoo)
   library(markdown)
   library(esquisse)
-  library(yardstick)
-  setwd("C:/Users/exame/Downloads/Hackathon_GroupO/Hackathon_GroupO/Dados Originais")
-
-############Data Integration############
-# Step 2: Read the dataset and convert to data frame
-  dt1 <- read.csv("training_data.csv", header = TRUE, sep = ",", dec = ".", stringsAsFactors = FALSE) #separador pode ser , ou ; ou \t
-  #caso tenha ids acrescentar ( rownames= "coluna com ids") acho que é importante para juntar colunas [penso que isto não é necessário]
+  train_path <- if (file.exists("data/training_data.csv")) "data/training_data.csv" else "../data/training_data.csv"
+  test_path <- if (file.exists("data/test_data.csv")) "data/test_data.csv" else "../data/test_data.csv"
+  
+  ############Data Integration############
+  # Step 2: Read the dataset and convert to data frame
+  dt1 <- read.csv(train_path, header = TRUE, sep = ",", dec = ".", stringsAsFactors = FALSE)
   dt1 <- as.data.frame(dt1)
   
-  dts1 <- read.csv("test_data.csv", header = TRUE, sep = ",", dec = ".", stringsAsFactors = FALSE)
+  dts1 <- read.csv(test_path, header = TRUE, sep = ",", dec = ".", stringsAsFactors = FALSE)
   dts1 <- as.data.frame(dts1)
   
 # Step 3: Exploring The Data

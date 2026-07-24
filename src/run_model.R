@@ -2,8 +2,12 @@
 # MAIN SCRIPT EXAMPLE   #
 ##########################
 
-# Set working directory
-source("C:/Users/exame/Downloads/Hackathon_GroupO/Hackathon_GroupO/model_functions.R")
+# Source model functions using relative path
+if (file.exists("src/model_functions.R")) {
+  source("src/model_functions.R")
+} else if (file.exists("model_functions.R")) {
+  source("model_functions.R")
+}
 
 # Load required libraries
 library(Boruta)
@@ -34,9 +38,7 @@ library(yardstick)
 #################### Train with all models + predictions #############
 #####################################################################
 
-# Prepare 👷🏼‍♀️ _________________________________________________________
-## Source model functions
-source("C:/Users/kiko2/Downloads/Hackathon_GroupO/model_functions.R")
+## Model functions sourced above
 
 ##assign data
 data <- dt2 #for train

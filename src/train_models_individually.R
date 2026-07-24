@@ -23,9 +23,15 @@ library(yardstick)
 # dts1 <- as.data.frame(dts1)
 
 
-################# Load new customer data ################# 
-data <- dt3
-new_data <- dts3  # replace with actual file path 
+################# Load dataset ################# 
+if (!exists("data")) {
+  train_path <- if (file.exists("data/training_data.csv")) "data/training_data.csv" else "../data/training_data.csv"
+  test_path <- if (file.exists("data/test_data.csv")) "data/test_data.csv" else "../data/test_data.csv"
+  if (file.exists(train_path)) {
+    data <- read.csv(train_path, stringsAsFactors = FALSE)
+    new_data <- read.csv(test_path, stringsAsFactors = FALSE)
+  }
+}
 
 ####################################### Classify #####################################   
 response_var <- colnames(data)[ncol(data)]   
